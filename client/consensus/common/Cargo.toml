@@ -7,16 +7,16 @@ edition = "2018"
 
 [dependencies]
 # Substrate deps
-sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-trie = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
 
 # Polkadot deps
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "master" }
+polkadot-primitives = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
 
 # Other deps
 futures = { version = "0.3.8", features = ["compat"] }
@@ -27,7 +27,7 @@ dyn-clone = "1.0.4"
 
 [dev-dependencies]
 # Substrate deps
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
 # Cumulus dependencies
 cumulus-test-client = { path = "../../../test/client" }
 # Other deps

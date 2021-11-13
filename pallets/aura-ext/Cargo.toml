@@ -7,14 +7,14 @@ description = "AURA consensus extension pallet for parachains"
 
 [dependencies]
 # Substrate dependencies
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-frame-executive = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+frame-executive = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
 
 # Other Dependencies
 codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = ["derive"]}

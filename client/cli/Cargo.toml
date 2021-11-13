@@ -8,5 +8,5 @@ edition = "2018"
 structopt = "0.3.3"
 
 # Substrate dependencies
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-cli = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-service = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }

@@ -8,7 +8,7 @@ use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;
 use parachain_template_runtime::{Block, RuntimeApi};
-use polkadot_parachain::primitives::AccountIdConversion;
+// use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
@@ -97,11 +97,14 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
+		todo!()
+		// subspace_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
+
 	}
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		polkadot_cli::Cli::native_runtime_version(chain_spec)
+		todo!()
+		// subspace_cli::Cli::native_runtime_version(chain_spec)
 	}
 }
 
@@ -254,8 +257,8 @@ pub fn run() -> Result<()> {
 
 				let id = ParaId::from(para_id);
 
-				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
+				// let parachain_account =
+					// AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
 
 				let block: Block =
 					generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
@@ -267,7 +270,7 @@ pub fn run() -> Result<()> {
 						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				info!("Parachain id: {:?}", id);
-				info!("Parachain Account: {}", parachain_account);
+				// info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 

@@ -7,18 +7,18 @@ edition = "2018"
 
 [dependencies]
 # Substrate deps
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
 
 # Polkadot deps
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "master" }
-polkadot-node-primitives = { git = "https://github.com/paritytech/polkadot", branch = "master" }
-polkadot-overseer = { git = "https://github.com/paritytech/polkadot", branch = "master" }
-polkadot-node-subsystem = { git = "https://github.com/paritytech/polkadot", branch = "master" }
+polkadot-primitives = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
+polkadot-node-primitives = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
+polkadot-overseer = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
+polkadot-node-subsystem = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
 
 # Cumulus deps
 cumulus-primitives-core = { path = "../../primitives/core" }
@@ -37,7 +37,7 @@ tokio = { version = "1.10", features = ["macros"] }
 cumulus-test-service = { path = "../../test/service" }
 
 # substrate deps
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "master" }
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-cli = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-service = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }

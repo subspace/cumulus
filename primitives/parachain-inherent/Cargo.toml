@@ -6,17 +6,17 @@ edition = "2018"
 
 [dependencies]
 # Substrate dependencies
-sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", optional = true , branch = "master" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", optional = true , branch = "master" }
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", optional = true , branch = "master" }
-sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
-sp-api = { git = "https://github.com/paritytech/substrate", optional = true , branch = "master" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", optional = true , rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", optional = true , rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", optional = true , rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-api = { git = "https://github.com/paritytech/substrate", optional = true , rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
 
 # Polkadot dependencies
-polkadot-client = { git = "https://github.com/paritytech/polkadot", optional = true, branch = "master" }
+polkadot-client = { git = "https://github.com/liuchengxu/polkadot", optional = true, rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
 
 # Cumulus dependencies
 cumulus-primitives-core = { path = "../core", default-features = false }
