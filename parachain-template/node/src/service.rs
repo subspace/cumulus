@@ -13,6 +13,9 @@ use cumulus_client_consensus_aura::{
 	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
 use cumulus_client_consensus_common::ParachainConsensus;
+use cumulus_client_consensus_relay_chain::{
+	build_relay_chain_consensus, BuildRelayChainConsensusParams,
+};
 use cumulus_client_network::build_block_announce_validator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
@@ -364,6 +367,7 @@ pub fn parachain_build_import_queue(
 	>,
 	sc_service::Error,
 > {
+	/*
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	cumulus_client_consensus_aura::import_queue::<
@@ -394,6 +398,22 @@ pub fn parachain_build_import_queue(
 		telemetry,
 	})
 	.map_err(Into::into)
+	*/
+
+	let block_import = client.clone();
+	// FIXME: relay chain seems to expect Aura somewhere when testing with polkadot.
+	// 2021-11-14 19:38:11 panicked at 'Could not find an AuRa seal digest!', /home/xlc/src/github.com/paritytech/cumulus/pallets/aura-ext/src/lib.rs:138:25
+	let create_inherent_data_providers = |_, _| async move {
+		let time = sp_timestamp::InherentDataProvider::from_system_time();
+		Ok(time)
+	};
+	cumulus_client_consensus_relay_chain::import_queue(
+		client,
+		block_import,
+		create_inherent_data_providers,
+		&task_manager.spawn_essential_handle(),
+		None,
+	).map_err(Into::into)
 }
 
 /// Start a parachain node.
@@ -420,7 +440,7 @@ pub async fn start_parachain_node(
 		 sync_oracle,
 		 keystore,
 		 force_authoring| {
-			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+			// let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 				task_manager.spawn_handle(),
@@ -432,6 +452,8 @@ pub async fn start_parachain_node(
 
 			let relay_chain_backend = relay_chain_node.backend.clone();
 			let relay_chain_client = relay_chain_node.client.clone();
+
+			/*
 			Ok(build_aura_consensus::<
 				sp_consensus_aura::sr25519::AuthorityPair,
 				_,
@@ -485,6 +507,39 @@ pub async fn start_parachain_node(
 				// And a maximum of 750ms if slots are skipped
 				max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
 				telemetry,
+			}))
+			*/
+
+			let relay_chain_client_clone = relay_chain_node.client.clone();
+			let relay_chain_backend_clone = relay_chain_node.backend.clone();
+
+			Ok(build_relay_chain_consensus(BuildRelayChainConsensusParams {
+				para_id: id,
+				proposer_factory,
+				create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
+					let parachain_inherent =
+					cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
+						relay_parent,
+						&relay_chain_client_clone,
+						&*relay_chain_backend_clone,
+						&validation_data,
+						id,
+					);
+					async move {
+						let time = sp_timestamp::InherentDataProvider::from_system_time();
+
+						let parachain_inherent = parachain_inherent.ok_or_else(|| {
+							Box::<dyn std::error::Error + Send + Sync>::from(
+								"Failed to create parachain inherent",
+							)
+						})?;
+
+						Ok((time, parachain_inherent))
+					}
+				},
+				block_import: client.clone(),
+				relay_chain_client,
+				relay_chain_backend,
 			}))
 		},
 	)
