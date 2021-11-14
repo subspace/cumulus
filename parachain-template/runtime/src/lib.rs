@@ -176,7 +176,7 @@ pub mod opaque {
 
 impl_opaque_keys! {
 	pub struct SessionKeys {
-		pub aura: Aura,
+		// pub aura: Aura,
 	}
 }
 
@@ -329,16 +329,16 @@ impl pallet_timestamp::Config for Runtime {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const UncleGenerations: u32 = 0;
-}
+// parameter_types! {
+	// pub const UncleGenerations: u32 = 0;
+// }
 
-impl pallet_authorship::Config for Runtime {
-	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
-	type EventHandler = (CollatorSelection,);
-}
+// impl pallet_authorship::Config for Runtime {
+	// type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
+	// type UncleGenerations = UncleGenerations;
+	// type FilterUncle = ();
+	// type EventHandler = (CollatorSelection,);
+// }
 
 parameter_types! {
 	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
@@ -392,7 +392,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 
 impl parachain_info::Config for Runtime {}
 
-impl cumulus_pallet_aura_ext::Config for Runtime {}
+// impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
 	pub const RocLocation: MultiLocation = MultiLocation::parent();
@@ -552,6 +552,7 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
 
+/*
 parameter_types! {
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;
@@ -567,7 +568,8 @@ impl pallet_session::Config for Runtime {
 	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
 	type SessionManager = CollatorSelection;
 	// Essentially just Aura, but lets be pedantic.
-	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
+	// type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
+	type SessionHandler = ();
 	type Keys = SessionKeys;
 	type WeightInfo = ();
 }
@@ -609,6 +611,7 @@ impl pallet_collator_selection::Config for Runtime {
 	type ValidatorRegistration = Session;
 	type WeightInfo = ();
 }
+*/
 
 /// Configure the pallet template in pallets/template.
 impl pallet_template::Config for Runtime {
@@ -635,11 +638,11 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
 
 		// Collator support. The order of these 4 are important and shall not change.
-		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
-		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
+		// Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
+		// CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
+		// Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 22,
+		// Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
+		// AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
@@ -653,15 +656,15 @@ construct_runtime!(
 );
 
 impl_runtime_apis! {
-	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
-		}
+	// impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
+		// fn slot_duration() -> sp_consensus_aura::SlotDuration {
+			// sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+		// }
 
-		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().into_inner()
-		}
-	}
+		// fn authorities() -> Vec<AuraId> {
+			// Aura::authorities().into_inner()
+		// }
+	// }
 
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
@@ -846,8 +849,18 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 	}
 }
 
+/// Based on `cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>` with the aura seal check
+/// removed.
+pub struct BlockExecutor;
+
+impl frame_support::traits::ExecuteBlock<Block> for BlockExecutor {
+	fn execute_block(block: Block) {
+		Executive::execute_block(block)
+	}
+}
+
 cumulus_pallet_parachain_system::register_validate_block! {
 	Runtime = Runtime,
-	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
+	BlockExecutor = BlockExecutor,
 	CheckInherents = CheckInherents,
 }
