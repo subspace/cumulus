@@ -188,28 +188,6 @@ fn testnet_genesis(
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
 		parachain_info: parachain_template_runtime::ParachainInfoConfig { parachain_id: id },
-		// collator_selection: parachain_template_runtime::CollatorSelectionConfig {
-			// invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-			// candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
-			// ..Default::default()
-		// },
-		// session: parachain_template_runtime::SessionConfig {
-			// keys: invulnerables
-				// .iter()
-				// .cloned()
-				// .map(|(acc, aura)| {
-					// (
-						// acc.clone(),                 // account id
-						// acc,                         // validator id
-						// template_session_keys(aura), // session keys
-					// )
-				// })
-				// .collect(),
-		// },
-		// no need to pass anything to aura, in fact it will panic if we do. Session will take care
-		// of this.
-		// aura: Default::default(),
-		// aura_ext: Default::default(),
 		parachain_system: Default::default(),
 	}
 }
