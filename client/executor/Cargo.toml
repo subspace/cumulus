@@ -1,0 +1,47 @@
+[package]
+name = "cirrus-client-executor"
+version = "0.1.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+
+[dependencies]
+# Substrate dependencies
+sp-runtime = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-core = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+
+# Polkadot dependencies
+polkadot-primitives = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
+polkadot-node-primitives = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
+polkadot-overseer = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
+polkadot-node-subsystem = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
+
+# Cumulus dependencies
+cumulus-client-network = { path = "../network" }
+cumulus-client-consensus-common = { path = "../consensus/common" }
+cumulus-primitives-core = { path = "../../primitives/core" }
+
+# Other dependencies
+codec = { package = "parity-scale-codec", version = "2.3.0", features = [ "derive" ] }
+futures = { version = "0.3.1", features = ["compat"] }
+parking_lot = "0.10.2"
+tracing = "0.1.25"
+
+subspace-primitives = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-primitives" }
+
+[dev-dependencies]
+# Polkadot dependencies
+polkadot-node-subsystem-test-helpers = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
+
+# Cumulus dependencies
+cumulus-test-runtime = { path = "../../test/runtime" }
+cumulus-test-client = { path = "../../test/client" }
+# Substrate dependencies
+
+sp-state-machine = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+
+# Other dependencies
+async-trait = "0.1.42"

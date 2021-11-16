@@ -30,3 +30,5 @@ futures = { version = "0.3.8", features = ["compat"] }
 tracing = "0.1.22"
 async-trait = "0.1.42"
 parking_lot = "0.10.2"
+
+subspace-node = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node" }

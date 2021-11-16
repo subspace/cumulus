@@ -29,6 +29,11 @@ use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 
+use cumulus_client_consensus_relay_chain::subspace::{
+	build_primary_chain_consensus, BuildPrimaryChainConsensusParams,
+};
+use subspace_cli::service as subspace_service;
+
 /// Native executor instance.
 pub struct TemplateRuntimeExecutor;
 
@@ -213,7 +218,7 @@ where
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
-		&polkadot_service::NewFull<polkadot_service::Client>,
+		&subspace_service::NewFull<Arc<subspace_service::FullClient>>,
 		Arc<
 			sc_transaction_pool::FullPool<
 				Block,
@@ -234,21 +239,28 @@ where
 	let params = new_partial::<RuntimeApi, Executor, BIQ>(&parachain_config, build_import_queue)?;
 	let (mut telemetry, telemetry_worker_handle) = params.other;
 
-	let relay_chain_full_node =
-		cumulus_client_service::build_polkadot_full_node(polkadot_config, telemetry_worker_handle)
-			.map_err(|e| match e {
-				polkadot_service::Error::Sub(x) => x,
-				s => format!("{}", s).into(),
-			})?;
+	// FIXME
+	// let relay_chain_full_node =
+	// cumulus_client_service::build_polkadot_full_node(polkadot_config, telemetry_worker_handle)
+	// .map_err(|e| match e {
+	// polkadot_service::Error::Sub(x) => x,
+	// s => format!("{}", s).into(),
+	// })?;
+
+	let relay_chain_full_node = cirrus_client_service::build_subspace_full_node(polkadot_config)?;
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
-	let block_announce_validator = build_block_announce_validator(
-		relay_chain_full_node.client.clone(),
-		id,
-		Box::new(relay_chain_full_node.network.clone()),
-		relay_chain_full_node.backend.clone(),
-	);
+
+	// FIXME
+	// let block_announce_validator = build_block_announce_validator(
+	// relay_chain_full_node.client.clone(),
+	// id,
+	// Box::new(relay_chain_full_node.network.clone()),
+	// relay_chain_full_node.backend.clone(),
+	// );
+
+	let block_announce_validator = todo!();
 
 	let force_authoring = parachain_config.force_authoring;
 	let validator = parachain_config.role.is_authority();
@@ -318,20 +330,35 @@ where
 
 		let spawner = task_manager.spawn_handle();
 
-		let params = StartCollatorParams {
-			para_id: id,
+		// let params = StartCollatorParams {
+		// para_id: id,
+		// block_status: client.clone(),
+		// announce_block,
+		// client: client.clone(),
+		// task_manager: &mut task_manager,
+		// relay_chain_full_node,
+		// spawner,
+		// parachain_consensus,
+		// import_queue,
+		// };
+
+		// start_collator(params).await?;
+
+		let params = cirrus_client_service::StartExecutorParams {
 			block_status: client.clone(),
 			announce_block,
 			client: client.clone(),
 			task_manager: &mut task_manager,
-			relay_chain_full_node,
+			primary_chain_full_node: relay_chain_full_node,
 			spawner,
 			parachain_consensus,
 			import_queue,
 		};
 
-		start_collator(params).await?;
+		cirrus_client_service::start_executor(params).await?;
 	} else {
+		todo!("Impl `start_full_node`");
+		/*
 		let params = StartFullNodeParams {
 			client: client.clone(),
 			announce_block,
@@ -341,6 +368,7 @@ where
 		};
 
 		start_full_node(params)?;
+		*/
 	}
 
 	start_network.start_network();
@@ -373,7 +401,8 @@ pub fn parachain_build_import_queue(
 		create_inherent_data_providers,
 		&task_manager.spawn_essential_handle(),
 		None,
-	).map_err(Into::into)
+	)
+	.map_err(Into::into)
 }
 
 /// Start a parachain node.
@@ -414,28 +443,28 @@ pub async fn start_parachain_node(
 			let relay_chain_client_clone = relay_chain_node.client.clone();
 			let relay_chain_backend_clone = relay_chain_node.backend.clone();
 
-			Ok(build_relay_chain_consensus(BuildRelayChainConsensusParams {
-				para_id: id,
+			Ok(build_primary_chain_consensus(BuildPrimaryChainConsensusParams {
 				proposer_factory,
 				create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
-					let parachain_inherent =
-					cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
-						relay_parent,
-						&relay_chain_client_clone,
-						&*relay_chain_backend_clone,
-						&validation_data,
-						id,
-					);
+					// let parachain_inherent =
+					// cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
+					// relay_parent,
+					// &relay_chain_client_clone,
+					// &*relay_chain_backend_clone,
+					// &validation_data,
+					// id,
+					// );
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
+						Ok(time)
 
-						let parachain_inherent = parachain_inherent.ok_or_else(|| {
-							Box::<dyn std::error::Error + Send + Sync>::from(
-								"Failed to create parachain inherent",
-							)
-						})?;
+						// let parachain_inherent = parachain_inherent.ok_or_else(|| {
+						// Box::<dyn std::error::Error + Send + Sync>::from(
+						// "Failed to create parachain inherent",
+						// )
+						// })?;
 
-						Ok((time, parachain_inherent))
+						// Ok((time, parachain_inherent))
 					}
 				},
 				block_import: client.clone(),

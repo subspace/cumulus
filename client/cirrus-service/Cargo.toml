@@ -1,0 +1,37 @@
+[package]
+name = "cirrus-client-service"
+version = "0.1.0"
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2018"
+
+[dependencies]
+# Cumulus dependencies
+cumulus-client-consensus-common = { path = "../consensus/common" }
+cumulus-client-pov-recovery = { path = "../pov-recovery" }
+cumulus-primitives-core = { path = "../../primitives/core" }
+
+# Substrate dependencies
+sc-chain-spec = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-service = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-consensus-babe = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-api = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-core = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", rev = "a9465729e2c5d2ef8d87ac404da27e5e10adde8a" }
+
+# Other deps
+tracing = "0.1.22"
+codec = { package = "parity-scale-codec", version = "2.3.0" }
+parking_lot = "0.10.2"
+
+# Cirrus
+cirrus-client-executor = { path = "../executor" }
+
+# Subspace
+subspace-node = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node" }
+subspace-primitives = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-primitives" }

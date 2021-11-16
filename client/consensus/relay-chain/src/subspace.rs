@@ -52,16 +52,10 @@ use sp_inherents::{CreateInherentDataProviders, InherentData, InherentDataProvid
 use sp_runtime::traits::{Block as BlockT, HashFor, Header as HeaderT};
 use std::{marker::PhantomData, sync::Arc, time::Duration};
 
-mod import_queue;
-pub use import_queue::{import_queue, Verifier};
-
-pub mod subspace;
-
 const LOG_TARGET: &str = "cumulus-consensus-relay-chain";
 
 /// The implementation of the relay-chain provided consensus for parachains.
-pub struct RelayChainConsensus<B, PF, BI, RClient, RBackend, CIDP> {
-	para_id: ParaId,
+pub struct PrimaryChainConsensus<B, PF, BI, RClient, RBackend, CIDP> {
 	_phantom: PhantomData<B>,
 	proposer_factory: Arc<Mutex<PF>>,
 	create_inherent_data_providers: Arc<CIDP>,
@@ -71,11 +65,10 @@ pub struct RelayChainConsensus<B, PF, BI, RClient, RBackend, CIDP> {
 }
 
 impl<B, PF, BI, RClient, RBackend, CIDP> Clone
-	for RelayChainConsensus<B, PF, BI, RClient, RBackend, CIDP>
+	for PrimaryChainConsensus<B, PF, BI, RClient, RBackend, CIDP>
 {
 	fn clone(&self) -> Self {
 		Self {
-			para_id: self.para_id,
 			_phantom: PhantomData,
 			proposer_factory: self.proposer_factory.clone(),
 			create_inherent_data_providers: self.create_inherent_data_providers.clone(),
@@ -86,7 +79,7 @@ impl<B, PF, BI, RClient, RBackend, CIDP> Clone
 	}
 }
 
-impl<B, PF, BI, RClient, RBackend, CIDP> RelayChainConsensus<B, PF, BI, RClient, RBackend, CIDP>
+impl<B, PF, BI, RClient, RBackend, CIDP> PrimaryChainConsensus<B, PF, BI, RClient, RBackend, CIDP>
 where
 	B: BlockT,
 	RClient: ProvideRuntimeApi<PBlock>,
@@ -96,7 +89,6 @@ where
 {
 	/// Create a new instance of relay-chain provided consensus.
 	pub fn new(
-		para_id: ParaId,
 		proposer_factory: PF,
 		create_inherent_data_providers: CIDP,
 		block_import: BI,
@@ -104,7 +96,6 @@ where
 		polkadot_backend: Arc<RBackend>,
 	) -> Self {
 		Self {
-			para_id,
 			proposer_factory: Arc::new(Mutex::new(proposer_factory)),
 			create_inherent_data_providers: Arc::new(create_inherent_data_providers),
 			block_import: Arc::new(futures::lock::Mutex::new(ParachainBlockImport::new(
@@ -151,7 +142,7 @@ where
 
 #[async_trait::async_trait]
 impl<B, PF, BI, RClient, RBackend, CIDP> ParachainConsensus<B>
-	for RelayChainConsensus<B, PF, BI, RClient, RBackend, CIDP>
+	for PrimaryChainConsensus<B, PF, BI, RClient, RBackend, CIDP>
 where
 	B: BlockT,
 	RClient: ProvideRuntimeApi<PBlock> + Send + Sync,
@@ -230,28 +221,26 @@ where
 	}
 }
 
-/// Paramaters of [`build_relay_chain_consensus`].
-pub struct BuildRelayChainConsensusParams<PF, BI, RBackend, CIDP> {
-	pub para_id: ParaId,
+/// Paramaters of [`build_primary_chain_consensus`].
+pub struct BuildPrimaryChainConsensusParams<PF, BI, RBackend, CIDP> {
 	pub proposer_factory: PF,
 	pub create_inherent_data_providers: CIDP,
 	pub block_import: BI,
-	pub relay_chain_client: polkadot_client::Client,
+	pub relay_chain_client: Arc<subspace_node::service::FullClient>,
 	pub relay_chain_backend: Arc<RBackend>,
 }
 
-/// Build the [`RelayChainConsensus`].
+/// Build the [`PrimaryChainConsensus`].
 ///
 /// Returns a boxed [`ParachainConsensus`].
-pub fn build_relay_chain_consensus<Block, PF, BI, RBackend, CIDP>(
-	BuildRelayChainConsensusParams {
-		para_id,
+pub fn build_primary_chain_consensus<Block, PF, BI, RBackend, CIDP>(
+	BuildPrimaryChainConsensusParams {
 		proposer_factory,
 		create_inherent_data_providers,
 		block_import,
 		relay_chain_client,
 		relay_chain_backend,
-	}: BuildRelayChainConsensusParams<PF, BI, RBackend, CIDP>,
+	}: BuildPrimaryChainConsensusParams<PF, BI, RBackend, CIDP>,
 ) -> Box<dyn ParachainConsensus<Block>>
 where
 	Block: BlockT,
@@ -266,6 +255,9 @@ where
 	RBackend: Backend<PBlock> + 'static,
 	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData)> + 'static,
 {
+	todo!()
+
+	/*
 	RelayChainConsensusBuilder::new(
 		para_id,
 		proposer_factory,
@@ -275,96 +267,5 @@ where
 		relay_chain_backend,
 	)
 	.build()
-}
-
-/// Relay chain consensus builder.
-///
-/// Builds a [`RelayChainConsensus`] for a parachain. As this requires
-/// a concrete relay chain client instance, the builder takes a [`polkadot_client::Client`]
-/// that wraps this concrete instanace. By using [`polkadot_client::ExecuteWithClient`]
-/// the builder gets access to this concrete instance.
-struct RelayChainConsensusBuilder<Block, PF, BI, RBackend, CIDP> {
-	para_id: ParaId,
-	_phantom: PhantomData<Block>,
-	proposer_factory: PF,
-	create_inherent_data_providers: CIDP,
-	block_import: BI,
-	relay_chain_backend: Arc<RBackend>,
-	relay_chain_client: polkadot_client::Client,
-}
-
-impl<Block, PF, BI, RBackend, CIDP> RelayChainConsensusBuilder<Block, PF, BI, RBackend, CIDP>
-where
-	Block: BlockT,
-	PF: Environment<Block> + Send + Sync + 'static,
-	PF::Proposer: Proposer<
-		Block,
-		Transaction = BI::Transaction,
-		ProofRecording = EnableProofRecording,
-		Proof = <EnableProofRecording as ProofRecording>::Proof,
-	>,
-	BI: BlockImport<Block> + Send + Sync + 'static,
-	RBackend: Backend<PBlock> + 'static,
-	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData)> + 'static,
-{
-	/// Create a new instance of the builder.
-	fn new(
-		para_id: ParaId,
-		proposer_factory: PF,
-		block_import: BI,
-		create_inherent_data_providers: CIDP,
-		relay_chain_client: polkadot_client::Client,
-		relay_chain_backend: Arc<RBackend>,
-	) -> Self {
-		Self {
-			para_id,
-			_phantom: PhantomData,
-			proposer_factory,
-			block_import,
-			create_inherent_data_providers,
-			relay_chain_backend,
-			relay_chain_client,
-		}
-	}
-
-	/// Build the relay chain consensus.
-	fn build(self) -> Box<dyn ParachainConsensus<Block>> {
-		self.relay_chain_client.clone().execute_with(self)
-	}
-}
-
-impl<Block, PF, BI, RBackend, CIDP> polkadot_client::ExecuteWithClient
-	for RelayChainConsensusBuilder<Block, PF, BI, RBackend, CIDP>
-where
-	Block: BlockT,
-	PF: Environment<Block> + Send + Sync + 'static,
-	PF::Proposer: Proposer<
-		Block,
-		Transaction = BI::Transaction,
-		ProofRecording = EnableProofRecording,
-		Proof = <EnableProofRecording as ProofRecording>::Proof,
-	>,
-	BI: BlockImport<Block> + Send + Sync + 'static,
-	RBackend: Backend<PBlock> + 'static,
-	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData)> + 'static,
-{
-	type Output = Box<dyn ParachainConsensus<Block>>;
-
-	fn execute_with_client<PClient, Api, PBackend>(self, client: Arc<PClient>) -> Self::Output
-	where
-		<Api as sp_api::ApiExt<PBlock>>::StateBackend: sp_api::StateBackend<HashFor<PBlock>>,
-		PBackend: Backend<PBlock>,
-		PBackend::State: sp_api::StateBackend<sp_runtime::traits::BlakeTwo256>,
-		Api: polkadot_client::RuntimeApiCollection<StateBackend = PBackend::State>,
-		PClient: polkadot_client::AbstractClient<PBlock, PBackend, Api = Api> + 'static,
-	{
-		Box::new(RelayChainConsensus::new(
-			self.para_id,
-			self.proposer_factory,
-			self.create_inherent_data_providers,
-			self.block_import,
-			client.clone(),
-			self.relay_chain_backend,
-		))
-	}
+	*/
 }
