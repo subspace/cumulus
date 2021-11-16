@@ -83,7 +83,7 @@ impl<B, PF, BI, RClient, RBackend, CIDP> PrimaryChainConsensus<B, PF, BI, RClien
 where
 	B: BlockT,
 	RClient: ProvideRuntimeApi<PBlock>,
-	RClient::Api: ParachainHost<PBlock>,
+	// RClient::Api: ParachainHost<PBlock>,
 	RBackend: Backend<PBlock>,
 	CIDP: CreateInherentDataProviders<B, (PHash, PersistedValidationData)>,
 {
@@ -146,7 +146,7 @@ impl<B, PF, BI, RClient, RBackend, CIDP> ParachainConsensus<B>
 where
 	B: BlockT,
 	RClient: ProvideRuntimeApi<PBlock> + Send + Sync,
-	RClient::Api: ParachainHost<PBlock>,
+	// RClient::Api: ParachainHost<PBlock>,
 	RBackend: Backend<PBlock>,
 	BI: BlockImport<B> + Send + Sync,
 	PF: Environment<B> + Send + Sync,
@@ -255,17 +255,11 @@ where
 	RBackend: Backend<PBlock> + 'static,
 	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData)> + 'static,
 {
-	todo!()
-
-	/*
-	RelayChainConsensusBuilder::new(
-		para_id,
+	Box::new(PrimaryChainConsensus::new(
 		proposer_factory,
-		block_import,
 		create_inherent_data_providers,
+		block_import,
 		relay_chain_client,
 		relay_chain_backend,
-	)
-	.build()
-	*/
+	))
 }

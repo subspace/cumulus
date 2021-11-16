@@ -303,7 +303,7 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 		parachain_consensus,
 	);
 
-	todo!("Make the executor actually run");
+	println!("================== Make the executor actually run");
 
 	// FIXME: this should be the core of managing the parachain block production.
 

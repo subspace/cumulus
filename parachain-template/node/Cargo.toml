@@ -104,3 +104,4 @@ subspace-cli = { package = "subspace-node", path = "/home/xlc/src/github.com/sub
 
 cirrus-client-executor = { path = "../../client/executor" }
 cirrus-client-service = { path = "../../client/cirrus-service" }
+cirrus-client-network = { path = "../../client/cirrus-network" }

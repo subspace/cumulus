@@ -5,6 +5,7 @@ members = [
 	"client/consensus/common",
 	"client/consensus/relay-chain",
 	"client/executor",
+	"client/cirrus-network",
 	"client/cirrus-service",
 	"client/network",
 	"client/pov-recovery",

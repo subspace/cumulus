@@ -1122,6 +1122,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "cirrus-client-network"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "cumulus-test-service",
+ "derive_more",
+ "futures 0.3.17",
+ "futures-timer 3.0.2",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "polkadot-test-client",
+ "sc-cli",
+ "sc-client-api",
+ "sc-service",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-runtime",
+ "subspace-node",
+ "subspace-primitives",
+ "substrate-test-utils",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "cirrus-client-service"
 version = "0.1.0"
 dependencies = [
@@ -6119,6 +6148,7 @@ name = "parachain-template-node"
 version = "0.1.0"
 dependencies = [
  "cirrus-client-executor",
+ "cirrus-client-network",
  "cirrus-client-service",
  "cumulus-client-cli",
  "cumulus-client-collator",
