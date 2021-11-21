@@ -30,7 +30,7 @@ use sp_runtime::{
 
 use cumulus_client_consensus_common::ParachainConsensus;
 
-use subspace_primitives::{Collation, CollationResult, Hash as PHash};
+use subspace_runtime_primitives::{Collation, CollationResult, Hash as PHash};
 
 use codec::{Decode, Encode};
 use futures::{channel::oneshot, FutureExt};

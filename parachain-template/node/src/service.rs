@@ -33,7 +33,7 @@ use cirrus_client_network::build_block_announce_validator;
 use cumulus_client_consensus_relay_chain::subspace::{
 	build_primary_chain_consensus, BuildPrimaryChainConsensusParams,
 };
-use subspace_cli::service as subspace_service;
+use subspace_node::service as subspace_service;
 
 /// Native executor instance.
 pub struct TemplateRuntimeExecutor;

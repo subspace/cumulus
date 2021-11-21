@@ -41,7 +41,9 @@ use sp_runtime::{
 // OccupiedCoreAssumption, ParachainHost, SigningContext, UncheckedSigned,
 // };
 
-use subspace_primitives::{opaque::Block as PBlock, CollationSecondedSignal, Hash as PHash};
+use subspace_runtime_primitives::{
+	opaque::Block as PBlock, CollationSecondedSignal, Hash as PHash,
+};
 
 use codec::{Decode, DecodeAll, Encode};
 use futures::{

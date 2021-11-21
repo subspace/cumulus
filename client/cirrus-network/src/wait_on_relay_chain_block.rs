@@ -25,7 +25,7 @@ use sc_client_api::{
 use sp_runtime::generic::BlockId;
 use std::{sync::Arc, time::Duration};
 
-use subspace_primitives::{opaque::Block as PBlock, Hash as PHash};
+use subspace_runtime_primitives::{opaque::Block as PBlock, Hash as PHash};
 
 /// The timeout in seconds after that the waiting for a block should be aborted.
 const TIMEOUT_IN_SECONDS: u64 = 6;

@@ -1117,7 +1117,7 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "sp-tracing",
- "subspace-primitives",
+ "subspace-runtime-primitives",
  "tracing",
 ]
 
@@ -1144,7 +1144,7 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "subspace-node",
- "subspace-primitives",
+ "subspace-runtime-primitives",
  "substrate-test-utils",
  "tokio",
  "tracing",
@@ -1173,7 +1173,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "subspace-node",
- "subspace-primitives",
  "tracing",
 ]
 
@@ -5698,6 +5697,20 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-object-store"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-std",
+ "subspace-core-primitives",
 ]
 
 [[package]]
@@ -11409,15 +11422,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "subspace-primitives"
-version = "0.1.0"
-dependencies = [
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "subspace-rpc-primitives"
 version = "0.1.0"
 dependencies = [
@@ -11436,6 +11440,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "pallet-balances",
  "pallet-feeds",
+ "pallet-object-store",
  "pallet-offences-subspace",
  "pallet-rewards",
  "pallet-subspace",
@@ -11459,8 +11464,17 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "subspace-core-primitives",
- "subspace-primitives",
+ "subspace-runtime-primitives",
  "substrate-wasm-builder",
+]
+
+[[package]]
+name = "subspace-runtime-primitives"
+version = "0.1.0"
+dependencies = [
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

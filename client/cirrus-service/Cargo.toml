@@ -30,8 +30,7 @@ codec = { package = "parity-scale-codec", version = "2.3.0" }
 parking_lot = "0.10.2"
 
 # Cirrus
-cirrus-client-executor = { path = "../executor" }
+cirrus-client-executor = { path = "../cirrus-executor" }
 
 # Subspace
 subspace-node = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node" }
-subspace-primitives = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-primitives" }

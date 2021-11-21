@@ -100,8 +100,8 @@ polkadot-service = { git = "https://github.com/liuchengxu/polkadot", rev = "a528
 # polkadot-test-service = { git = "https://github.com/paritytech/polkadot", branch = "master" }
 
 # Subspace dependencies
-subspace-cli = { package = "subspace-node", path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node" }
+subspace-node = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node" }
 
-cirrus-client-executor = { path = "../../client/executor" }
+cirrus-client-executor = { path = "../../client/cirrus-executor" }
 cirrus-client-service = { path = "../../client/cirrus-service" }
 cirrus-client-network = { path = "../../client/cirrus-network" }
