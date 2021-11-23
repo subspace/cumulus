@@ -32,9 +32,10 @@ use cumulus_client_consensus_common::ParachainConsensus;
 
 // FIXME
 use polkadot_overseer::Handle as OverseerHandle;
-use polkadot_primitives::v1::CollatorPair;
+// use polkadot_primitives::v1::CollatorPair;
 
-use subspace_runtime_primitives::{Collation, CollationResult, Hash as PHash};
+use subspace_node_primitives::{Collation, CollationResult};
+use subspace_runtime_primitives::{CollatorPair, Hash as PHash};
 
 use codec::{Decode, Encode};
 use futures::{channel::oneshot, FutureExt};
@@ -192,6 +193,8 @@ where
 			"Producing candidate",
 		);
 
+		println!("=========================== [produce_candidate] Producing candidate");
+
 		// FIXME: We only sync the primary chain and does not attempt to produce candidate at the
 		// very first step.
 		tracing::trace!(
@@ -200,7 +203,7 @@ where
 			"Should be producing candidate...",
 		);
 
-		Some(CollationResult { collation: b"I'm a dummy collation".to_vec() })
+		Some(CollationResult { collation: b"I'm a dummy collation".to_vec(), result_sender: None })
 
 		/*
 		let last_head = match Block::Header::decode(&mut &validation_data.parent_head.0[..]) {
@@ -299,8 +302,8 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 	RA: ProvideRuntimeApi<Block> + Send + Sync + 'static,
 	RA::Api: CollectCollationInfo<Block>,
 {
-	use polkadot_node_primitives::CollationGenerationConfig;
 	use polkadot_node_subsystem::messages::{CollationGenerationMessage, CollatorProtocolMessage};
+	use subspace_node_primitives::CollationGenerationConfig;
 
 	let executor = Executor::new(
 		block_status,
@@ -316,7 +319,6 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 	let para_id = 999.into();
 	let config = CollationGenerationConfig {
 		key,
-		para_id,
 		collator: Box::new(move |relay_parent, validation_data| {
 			let collator = executor.clone();
 			let dummy_validation_data = PersistedValidationData {
@@ -326,12 +328,10 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 				max_pov_size: 6789,
 			};
 
-			let res = collator
+			collator
 				.produce_candidate(relay_parent, dummy_validation_data)
 				.instrument(span.clone())
-				.boxed();
-
-			todo!("Collator tried to produce a candidate!!!")
+				.boxed()
 		}),
 	};
 

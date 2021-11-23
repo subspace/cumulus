@@ -35,6 +35,7 @@ polkadot-primitives = { path = "/home/xlc/src/github.com/subspace/polkadot/primi
 polkadot-node-primitives = { path = "/home/xlc/src/github.com/subspace/polkadot/node/primitives" }
 polkadot-node-subsystem = { path = "/home/xlc/src/github.com/subspace/polkadot/node/subsystem" }
 
+subspace-node-primitives = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node-primitives" }
 subspace-runtime-primitives = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-runtime-primitives" }
 
 [dev-dependencies]

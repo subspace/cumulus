@@ -42,8 +42,9 @@ use sp_runtime::{
 // };
 
 use subspace_runtime_primitives::{
-	opaque::Block as PBlock, CollationSecondedSignal, Hash as PHash,
+	opaque::Block as PBlock, Hash as PHash,
 };
+use subspace_node_primitives::CollationSecondedSignal;
 
 use codec::{Decode, DecodeAll, Encode};
 use futures::{

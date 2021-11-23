@@ -36,3 +36,4 @@ cirrus-client-executor = { path = "../cirrus-executor" }
 
 # Subspace
 subspace-node = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node" }
+subspace-runtime-primitives = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-runtime-primitives" }

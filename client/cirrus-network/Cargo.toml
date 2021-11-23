@@ -31,6 +31,7 @@ derive_more = "0.99.2"
 # Subspace
 subspace-node = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node" }
 subspace-runtime-primitives = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-runtime-primitives" }
+subspace-node-primitives = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node-primitives" }
 
 [dev-dependencies]
 tokio = { version = "1.10", features = ["macros"] }

@@ -1117,6 +1117,7 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "sp-tracing",
+ "subspace-node-primitives",
  "subspace-runtime-primitives",
  "tracing",
 ]
@@ -1144,6 +1145,7 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "subspace-node",
+ "subspace-node-primitives",
  "subspace-runtime-primitives",
  "substrate-test-utils",
  "tokio",
@@ -1174,6 +1176,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "subspace-node",
+ "subspace-runtime-primitives",
  "tracing",
 ]
 
@@ -6873,6 +6876,7 @@ dependencies = [
  "sp-core",
  "sp-keystore",
  "sp-runtime",
+ "subspace-runtime-primitives",
  "thiserror",
  "tracing",
 ]
@@ -7042,6 +7046,8 @@ dependencies = [
  "polkadot-primitives 0.9.12",
  "sp-core",
  "sp-maybe-compressed-blob",
+ "subspace-node-primitives",
+ "subspace-runtime-primitives",
  "thiserror",
  "tracing",
 ]
@@ -7409,6 +7415,7 @@ dependencies = [
  "sc-authority-discovery",
  "sc-network",
  "strum 0.22.0",
+ "subspace-runtime-primitives",
  "thiserror",
 ]
 
@@ -7524,6 +7531,7 @@ dependencies = [
  "polkadot-statement-table 0.9.12",
  "sc-network",
  "smallvec",
+ "subspace-node-primitives",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -11775,10 +11783,19 @@ dependencies = [
  "sp-timestamp",
  "structopt",
  "subspace-runtime",
+ "subspace-runtime-primitives",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "thiserror",
+]
+
+[[package]]
+name = "subspace-node-primitives"
+version = "0.1.0"
+dependencies = [
+ "futures 0.3.17",
+ "subspace-runtime-primitives",
 ]
 
 [[package]]
@@ -11832,6 +11849,9 @@ dependencies = [
 name = "subspace-runtime-primitives"
 version = "0.1.0"
 dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "sp-application-crypto",
  "sp-core",
  "sp-runtime",
  "sp-std",

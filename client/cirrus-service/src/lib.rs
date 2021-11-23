@@ -42,7 +42,8 @@ use std::{marker::PhantomData, ops::Deref, sync::Arc};
 pub mod genesis;
 
 // FIXME
-use polkadot_primitives::v1::CollatorPair;
+// use polkadot_primitives::v1::CollatorPair;
+use subspace_runtime_primitives::CollatorPair;
 use subspace_node::service::{self as subspace_service, FullClient};
 
 /// The primary chain full node handle.
