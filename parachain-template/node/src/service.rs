@@ -240,26 +240,10 @@ where
 	let params = new_partial::<RuntimeApi, Executor, BIQ>(&parachain_config, build_import_queue)?;
 	let (mut telemetry, telemetry_worker_handle) = params.other;
 
-	// FIXME
-	// let relay_chain_full_node =
-	// cumulus_client_service::build_polkadot_full_node(polkadot_config, telemetry_worker_handle)
-	// .map_err(|e| match e {
-	// polkadot_service::Error::Sub(x) => x,
-	// s => format!("{}", s).into(),
-	// })?;
-
 	let relay_chain_full_node = cirrus_client_service::build_subspace_full_node(polkadot_config)?;
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
-
-	// FIXME
-	// let block_announce_validator = build_block_announce_validator(
-	// relay_chain_full_node.client.clone(),
-	// id,
-	// Box::new(relay_chain_full_node.network.clone()),
-	// relay_chain_full_node.backend.clone(),
-	// );
 
 	let block_announce_validator = build_block_announce_validator(
 		relay_chain_full_node.client.clone(),
@@ -334,20 +318,6 @@ where
 		)?;
 
 		let spawner = task_manager.spawn_handle();
-
-		// let params = StartCollatorParams {
-		// para_id: id,
-		// block_status: client.clone(),
-		// announce_block,
-		// client: client.clone(),
-		// task_manager: &mut task_manager,
-		// relay_chain_full_node,
-		// spawner,
-		// parachain_consensus,
-		// import_queue,
-		// };
-
-		// start_collator(params).await?;
 
 		let params = cirrus_client_service::StartExecutorParams {
 			block_status: client.clone(),
@@ -450,27 +420,9 @@ pub async fn start_parachain_node(
 
 			Ok(build_primary_chain_consensus(BuildPrimaryChainConsensusParams {
 				proposer_factory,
-				create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
-					// let parachain_inherent =
-					// cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
-					// relay_parent,
-					// &relay_chain_client_clone,
-					// &*relay_chain_backend_clone,
-					// &validation_data,
-					// id,
-					// );
-					async move {
-						let time = sp_timestamp::InherentDataProvider::from_system_time();
-						Ok(time)
-
-						// let parachain_inherent = parachain_inherent.ok_or_else(|| {
-						// Box::<dyn std::error::Error + Send + Sync>::from(
-						// "Failed to create parachain inherent",
-						// )
-						// })?;
-
-						// Ok((time, parachain_inherent))
-					}
+				create_inherent_data_providers: move |_, (relay_parent, validation_data)| async move {
+					let time = sp_timestamp::InherentDataProvider::from_system_time();
+					Ok(time)
 				},
 				block_import: client.clone(),
 				relay_chain_client,

@@ -29,6 +29,8 @@ tracing = "0.1.22"
 codec = { package = "parity-scale-codec", version = "2.3.0" }
 parking_lot = "0.10.2"
 
+polkadot-primitives = { path = "/home/xlc/src/github.com/subspace/polkadot/primitives" }
+
 # Cirrus
 cirrus-client-executor = { path = "../cirrus-executor" }
 

@@ -41,16 +41,16 @@ use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 pub mod genesis;
 
+// FIXME
+use polkadot_primitives::v1::CollatorPair;
 use subspace_node::service::{self as subspace_service, FullClient};
 
 /// The primary chain full node handle.
 pub struct PrimaryFullNode<C> {
 	/// The relay chain full node handles.
 	pub primary_chain_full_node: subspace_service::NewFull<C>,
-	/* Should be supported later.
 	/// The collator key used by the node.
 	pub collator_key: CollatorPair,
-	*/
 }
 
 impl<C> Deref for PrimaryFullNode<C> {
@@ -129,13 +129,13 @@ where
 		runtime_api: client.clone(),
 		block_status,
 		announce_block,
-		// overseer_handle: primary_chain_full_node
-		// .overseer_handle
-		// .clone()
-		// .ok_or_else(|| "Polkadot full node did not provide an `OverseerHandle`!")?,
+		overseer_handle: primary_chain_full_node
+			.overseer_handle
+			.clone()
+			.ok_or_else(|| "Subspace full node did not provide an `OverseerHandle`!")?,
 		spawner,
 		// para_id,
-		// key: primary_chain_full_node.collator_key.clone(),
+		key: primary_chain_full_node.collator_key.clone(),
 		parachain_consensus,
 	})
 	.await;
@@ -214,8 +214,13 @@ pub fn build_subspace_full_node(
 	if is_light {
 		Err(sc_service::Error::Other("Light client not supported.".into()))
 	} else {
-		let primary_chain_full_node = subspace_service::new_full(config)?;
-		Ok(PrimaryFullNode { primary_chain_full_node })
+		let collator_key = CollatorPair::generate().0;
+		let primary_chain_full_node = subspace_service::new_full(
+			config,
+			subspace_service::IsCollator::Yes(collator_key.clone()),
+		)
+		.map_err(|_| sc_service::Error::Other("Failed to build a full subspace node".into()))?;
+		Ok(PrimaryFullNode { primary_chain_full_node, collator_key })
 	}
 }
 

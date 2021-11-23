@@ -30,6 +30,10 @@ use sp_runtime::{
 
 use cumulus_client_consensus_common::ParachainConsensus;
 
+// FIXME
+use polkadot_overseer::Handle as OverseerHandle;
+use polkadot_primitives::v1::CollatorPair;
+
 use subspace_runtime_primitives::{Collation, CollationResult, Hash as PHash};
 
 use codec::{Decode, Encode};
@@ -271,9 +275,9 @@ pub struct StartExecutorParams<Block: BlockT, RA, BS, Spawner> {
 	pub runtime_api: Arc<RA>,
 	pub block_status: Arc<BS>,
 	pub announce_block: Arc<dyn Fn(Block::Hash, Option<Vec<u8>>) + Send + Sync>,
-	// pub overseer_handle: OverseerHandle,
+	pub overseer_handle: OverseerHandle,
 	pub spawner: Spawner,
-	// pub key: CollatorPair, FIXME: executor needs a key, but not now.
+	pub key: CollatorPair,
 	pub parachain_consensus: Box<dyn ParachainConsensus<Block>>,
 }
 
@@ -282,9 +286,9 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 	StartExecutorParams {
 		block_status,
 		announce_block,
-		// mut overseer_handle,
+		mut overseer_handle,
 		spawner,
-		// key,
+		key,
 		parachain_consensus,
 		runtime_api,
 	}: StartExecutorParams<Block, RA, BS, Spawner>,
@@ -295,7 +299,10 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 	RA: ProvideRuntimeApi<Block> + Send + Sync + 'static,
 	RA::Api: CollectCollationInfo<Block>,
 {
-	let _executor = Executor::new(
+	use polkadot_node_primitives::CollationGenerationConfig;
+	use polkadot_node_subsystem::messages::{CollationGenerationMessage, CollatorProtocolMessage};
+
+	let executor = Executor::new(
 		block_status,
 		Arc::new(spawner),
 		announce_block,
@@ -303,30 +310,38 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 		parachain_consensus,
 	);
 
-	println!("================== Make the executor actually run");
-
 	// FIXME: this should be the core of managing the parachain block production.
 
-	// let span = tracing::Span::current();
-	// let config = CollationGenerationConfig {
-	// key,
-	// para_id,
-	// collator: Box::new(move |relay_parent, validation_data| {
-	// let collator = collator.clone();
-	// collator
-	// .produce_candidate(relay_parent, validation_data.clone())
-	// .instrument(span.clone())
-	// .boxed()
-	// }),
-	// };
+	let span = tracing::Span::current();
+	let para_id = 999.into();
+	let config = CollationGenerationConfig {
+		key,
+		para_id,
+		collator: Box::new(move |relay_parent, validation_data| {
+			let collator = executor.clone();
+			let dummy_validation_data = PersistedValidationData {
+				parent_head: Default::default(),
+				relay_parent_number: Default::default(),
+				relay_parent_storage_root: Default::default(),
+				max_pov_size: 6789,
+			};
 
-	// overseer_handle
-	// .send_msg(CollationGenerationMessage::Initialize(config), "StartCollator")
-	// .await;
+			let res = collator
+				.produce_candidate(relay_parent, dummy_validation_data)
+				.instrument(span.clone())
+				.boxed();
 
-	// overseer_handle
-	// .send_msg(CollatorProtocolMessage::CollateOn(para_id), "StartCollator")
-	// .await;
+			todo!("Collator tried to produce a candidate!!!")
+		}),
+	};
+
+	overseer_handle
+		.send_msg(CollationGenerationMessage::Initialize(config), "StartCollator")
+		.await;
+
+	overseer_handle
+		.send_msg(CollatorProtocolMessage::CollateOn(para_id), "StartCollator")
+		.await;
 }
 
 #[cfg(test)]
