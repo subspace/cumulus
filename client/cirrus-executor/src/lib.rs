@@ -17,7 +17,7 @@
 //! Cirrus Executor implementation for Substrate.
 
 use cumulus_client_network::WaitToAnnounce;
-use cumulus_primitives_core::{CollectCollationInfo, ParachainBlockData, PersistedValidationData};
+use cumulus_primitives_core::{CollectCollationInfo, ParachainBlockData};
 
 use sc_client_api::BlockBackend;
 use sp_api::ProvideRuntimeApi;
@@ -35,7 +35,7 @@ use polkadot_overseer::Handle as OverseerHandle;
 // use polkadot_primitives::v1::CollatorPair;
 
 use subspace_node_primitives::{Collation, CollationResult};
-use subspace_runtime_primitives::{CollatorPair, Hash as PHash};
+use subspace_runtime_primitives::{CollatorPair, Hash as PHash, PersistedValidationData};
 
 use codec::{Decode, Encode};
 use futures::{channel::oneshot, FutureExt};
@@ -44,7 +44,7 @@ use std::sync::Arc;
 use tracing::Instrument;
 
 /// The logging target.
-const LOG_TARGET: &str = "cirrus-executor";
+const LOG_TARGET: &str = "cirrus::executor";
 
 /// The implementation of the Cirrus `Executor`.
 pub struct Executor<Block: BlockT, BS, RA> {
@@ -193,13 +193,12 @@ where
 			"Producing candidate",
 		);
 
-		println!("=========================== [produce_candidate] Producing candidate");
-
 		// FIXME: We only sync the primary chain and does not attempt to produce candidate at the
 		// very first step.
 		tracing::trace!(
 			target: LOG_TARGET,
 			relay_parent = ?relay_parent,
+			validation_data = ?validation_data,
 			"Should be producing candidate...",
 		);
 
@@ -313,23 +312,15 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 		parachain_consensus,
 	);
 
-	// FIXME: this should be the core of managing the parachain block production.
-
 	let span = tracing::Span::current();
 	let para_id = 999.into();
 	let config = CollationGenerationConfig {
 		key,
 		collator: Box::new(move |relay_parent, validation_data| {
 			let collator = executor.clone();
-			let dummy_validation_data = PersistedValidationData {
-				parent_head: Default::default(),
-				relay_parent_number: Default::default(),
-				relay_parent_storage_root: Default::default(),
-				max_pov_size: 6789,
-			};
 
 			collator
-				.produce_candidate(relay_parent, dummy_validation_data)
+				.produce_candidate(relay_parent, validation_data.clone())
 				.instrument(span.clone())
 				.boxed()
 		}),
