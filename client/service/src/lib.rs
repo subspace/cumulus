@@ -230,6 +230,8 @@ where
 		Api: RuntimeApiCollection<StateBackend = PBackend::State>,
 		PClient: AbstractClient<PBlock, PBackend, Api = Api> + 'static,
 	{
+		panic!("cumulus_client_consensus_common now requires ExecutorApi")
+		/*
 		let consensus = cumulus_client_consensus_common::run_parachain_consensus(
 			self.para_id,
 			self.client.clone(),
@@ -238,6 +240,7 @@ where
 		);
 
 		self.task_manager.spawn_essential_handle().spawn("cumulus-consensus", consensus);
+		*/
 	}
 }
 

@@ -139,10 +139,10 @@ pub mod pallet {
 			<DidSetValidationCode<T>>::kill();
 			<UpgradeRestrictionSignal<T>>::kill();
 
-			assert!(
-				<ValidationData<T>>::exists(),
-				"set_validation_data inherent needs to be present in every block!"
-			);
+			// assert!(
+				// <ValidationData<T>>::exists(),
+				// "set_validation_data inherent needs to be present in every block!"
+			// );
 
 			let host_config = match Self::host_configuration() {
 				Some(ok) => ok,

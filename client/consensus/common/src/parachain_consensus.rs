@@ -19,21 +19,24 @@ use sc_client_api::{
 };
 use sc_consensus::{BlockImport, BlockImportParams, ForkChoiceStrategy};
 use sp_api::ProvideRuntimeApi;
-use sp_blockchain::{Error as ClientError, Result as ClientResult};
+use sp_blockchain::{Error as ClientError, HeaderBackend, Result as ClientResult};
 use sp_consensus::{BlockOrigin, BlockStatus};
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, Header as HeaderT},
+	SaturatedConversion,
 };
 
 use polkadot_primitives::v1::{
 	Block as PBlock, Id as ParaId, OccupiedCoreAssumption, ParachainHost,
 };
 
-use codec::Decode;
+use codec::{Decode, Encode};
 use futures::{future, select, FutureExt, Stream, StreamExt};
 
 use std::{pin::Pin, sync::Arc};
+
+use subspace_runtime_primitives::{BlockNumber, Hash};
 
 /// Helper for the relay chain client. This is expected to be a lightweight handle like an `Arc`.
 pub trait RelaychainClient: Clone + 'static {
@@ -55,6 +58,22 @@ pub trait RelaychainClient: Clone + 'static {
 		at: &BlockId<PBlock>,
 		para_id: ParaId,
 	) -> ClientResult<Option<Vec<u8>>>;
+
+	/// Get a stream of new best heads for the given parachain.
+	fn new_best_executor_heads<Block: BlockT, SecondaryClient: HeaderBackend<Block> + 'static>(
+		&self,
+		client: Arc<SecondaryClient>,
+	) -> Self::HeadStream {
+		todo!("Impl `new_best_executor_heads`")
+	}
+
+	fn executor_head_hash(
+		&self,
+		at: &BlockId<PBlock>,
+		number: BlockNumber,
+	) -> ClientResult<Option<Vec<u8>>> {
+		Ok(None)
+	}
 }
 
 /// Follow the finalized head of the given parachain.
@@ -134,18 +153,91 @@ pub async fn run_parachain_consensus<P, R, Block, B>(
 		+ UsageProvider<Block>
 		+ Send
 		+ Sync
+		+ 'static
 		+ BlockBackend<Block>
+		+ HeaderBackend<Block>
 		+ BlockchainEvents<Block>,
 	for<'a> &'a P: BlockImport<Block>,
 	R: RelaychainClient,
 	B: Backend<Block>,
 {
 	let follow_new_best =
-		follow_new_best(para_id, parachain.clone(), relay_chain.clone(), announce_block);
-	let follow_finalized_head = follow_finalized_head(para_id, parachain, relay_chain);
+		follow_new_best(para_id, parachain.clone(), relay_chain.clone(), announce_block.clone());
+	let follow_finalized_head =
+		follow_finalized_head(para_id, parachain.clone(), relay_chain.clone());
+
+	let follow_new_best_subspace =
+		follow_new_best_subspace(parachain.clone(), relay_chain.clone(), announce_block);
+
 	select! {
 		_ = follow_new_best.fuse() => {},
 		_ = follow_finalized_head.fuse() => {},
+		_ = follow_new_best_subspace.fuse() => {},
+	}
+}
+
+/// Follow the relay chain new best head, to update the Parachain new best head.
+async fn follow_new_best_subspace<P, R, Block, B>(
+	parachain: Arc<P>,
+	relay_chain: R,
+	announce_block: Arc<dyn Fn(Block::Hash, Option<Vec<u8>>) + Send + Sync>,
+) where
+	Block: BlockT,
+	P: Finalizer<Block, B>
+		+ UsageProvider<Block>
+		+ Send
+		+ Sync
+		+ 'static
+		+ BlockBackend<Block>
+		+ HeaderBackend<Block>
+		+ BlockchainEvents<Block>,
+	for<'a> &'a P: BlockImport<Block>,
+	R: RelaychainClient,
+	B: Backend<Block>,
+{
+	let mut new_best_heads = relay_chain.new_best_executor_heads(parachain.clone()).fuse();
+	let mut imported_blocks = parachain.import_notification_stream().fuse();
+	// The unset best header of the parachain. Will be `Some(_)` when we have imported a relay chain
+	// block before the parachain block it included. In this case we need to wait for this block to
+	// be imported to set it as new best.
+	let mut unset_best_header = None;
+
+	loop {
+		select! {
+			h = new_best_heads.next() => {
+				match h {
+					Some(h) => handle_new_best_parachain_head_subspace(
+						h,
+						&*parachain,
+						&mut unset_best_header,
+					).await,
+					None => {
+						tracing::debug!(
+							target: "cumulus-consensus",
+							"Stopping following new best.",
+						);
+						return
+					}
+				}
+			},
+			i = imported_blocks.next() => {
+				match i {
+					Some(i) => handle_new_block_imported(
+						i,
+						&mut unset_best_header,
+						&*parachain,
+						&*announce_block,
+					).await,
+					None => {
+						tracing::debug!(
+							target: "cumulus-consensus",
+							"Stopping following imported blocks.",
+						);
+						return
+					}
+				}
+			},
+		}
 	}
 }
 
@@ -271,6 +363,78 @@ async fn handle_new_block_imported<Block, P>(
 }
 
 /// Handle the new best parachain head as extracted from the new best relay chain.
+async fn handle_new_best_parachain_head_subspace<Block, P>(
+	encoded_head_hash: Vec<u8>,
+	parachain: &P,
+	unset_best_header: &mut Option<Block::Header>,
+) where
+	Block: BlockT,
+	P: UsageProvider<Block> + Send + Sync + BlockBackend<Block> + HeaderBackend<Block>,
+	for<'a> &'a P: BlockImport<Block>,
+{
+	println!("================= [handle_new_best_parachain_head_subspace]");
+	let parachain_head_hash = match <<<Block as BlockT>::Header as HeaderT>::Hash>::decode(
+		&mut &encoded_head_hash[..],
+	) {
+		Ok(header) => header,
+		Err(err) => {
+			tracing::debug!(
+				target: "cumulus-consensus",
+				error = ?err,
+				"Could not decode Parachain header while following best heads.",
+			);
+			return
+		},
+	};
+
+	let parachain_head = parachain.header(BlockId::Hash(parachain_head_hash)).unwrap().unwrap();
+
+	let hash = parachain_head.hash();
+
+	if parachain.usage_info().chain.best_hash == hash {
+		tracing::debug!(
+			target: "cumulus-consensus",
+			block_hash = ?hash,
+			"Skipping set new best block, because block is already the best.",
+		)
+	} else {
+		// Make sure the block is already known or otherwise we skip setting new best.
+		match parachain.block_status(&BlockId::Hash(hash)) {
+			Ok(BlockStatus::InChainWithState) => {
+				unset_best_header.take();
+
+				import_block_as_new_best(hash, parachain_head, parachain).await;
+			},
+			Ok(BlockStatus::InChainPruned) => {
+				tracing::error!(
+					target: "cumulus-collator",
+					block_hash = ?hash,
+					"Trying to set pruned block as new best!",
+				);
+			},
+			Ok(BlockStatus::Unknown) => {
+				*unset_best_header = Some(parachain_head);
+
+				tracing::debug!(
+					target: "cumulus-collator",
+					block_hash = ?hash,
+					"Parachain block not yet imported, waiting for import to enact as best block.",
+				);
+			},
+			Err(e) => {
+				tracing::error!(
+					target: "cumulus-collator",
+					block_hash = ?hash,
+					error = ?e,
+					"Failed to get block status of block.",
+				);
+			},
+			_ => {},
+		}
+	}
+}
+
+/// Handle the new best parachain head as extracted from the new best relay chain.
 async fn handle_new_best_parachain_head<Block, P>(
 	head: Vec<u8>,
 	parachain: &P,
@@ -373,7 +537,7 @@ where
 impl<T> RelaychainClient for Arc<T>
 where
 	T: sc_client_api::BlockchainEvents<PBlock> + ProvideRuntimeApi<PBlock> + 'static + Send + Sync,
-	<T as ProvideRuntimeApi<PBlock>>::Api: ParachainHost<PBlock>,
+	<T as ProvideRuntimeApi<PBlock>>::Api: ParachainHost<PBlock> + sp_executor::ExecutorApi<PBlock>,
 {
 	type Error = ClientError;
 
@@ -410,9 +574,46 @@ where
 		at: &BlockId<PBlock>,
 		para_id: ParaId,
 	) -> ClientResult<Option<Vec<u8>>> {
+		// TODO:
 		self.runtime_api()
 			.persisted_validation_data(at, para_id, OccupiedCoreAssumption::TimedOut)
 			.map(|s| s.map(|s| s.parent_head.0))
+			.map_err(Into::into)
+	}
+
+	fn new_best_executor_heads<
+		Block: BlockT,
+		SecondaryClient: sp_blockchain::HeaderBackend<Block> + 'static,
+	>(
+		&self,
+		client: Arc<SecondaryClient>,
+	) -> Self::HeadStream {
+		let relay_chain = self.clone();
+
+		self.import_notification_stream()
+			.filter_map(move |n| {
+				future::ready(if n.is_new_best {
+					let number = client.info().best_number;
+					relay_chain
+						.executor_head_hash(&BlockId::hash(n.hash), number.saturated_into())
+						.ok()
+						.flatten()
+				} else {
+					None
+				})
+			})
+			.boxed()
+	}
+
+	fn executor_head_hash(
+		&self,
+		at: &BlockId<PBlock>,
+		number: BlockNumber,
+	) -> ClientResult<Option<Vec<u8>>> {
+		use sp_executor::ExecutorApi;
+		self.runtime_api()
+			.head_hash(at, number)
+			.map(|h| h.map(|h| h.encode()))
 			.map_err(Into::into)
 	}
 }

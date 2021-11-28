@@ -21,11 +21,13 @@ use cumulus_primitives_core::{CollectCollationInfo, ParachainBlockData};
 
 use sc_client_api::BlockBackend;
 use sp_api::ProvideRuntimeApi;
+use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockStatus;
 use sp_core::traits::SpawnNamed;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, HashFor, Header as HeaderT, Zero},
+	SaturatedConversion,
 };
 
 use cumulus_client_consensus_common::ParachainConsensus;
@@ -35,7 +37,7 @@ use polkadot_overseer::Handle as OverseerHandle;
 // use polkadot_primitives::v1::CollatorPair;
 
 use subspace_node_primitives::{Collation, CollationResult};
-use subspace_runtime_primitives::{CollatorPair, Hash as PHash, PersistedValidationData};
+use subspace_runtime_primitives::{CollatorPair, Hash as PHash, HeadData, PersistedValidationData};
 
 use codec::{Decode, Encode};
 use futures::{channel::oneshot, FutureExt};
@@ -47,27 +49,30 @@ use tracing::Instrument;
 const LOG_TARGET: &str = "cirrus::executor";
 
 /// The implementation of the Cirrus `Executor`.
-pub struct Executor<Block: BlockT, BS, RA> {
+pub struct Executor<Block: BlockT, BS, RA, Client> {
 	block_status: Arc<BS>,
 	parachain_consensus: Box<dyn ParachainConsensus<Block>>,
 	wait_to_announce: Arc<Mutex<WaitToAnnounce<Block>>>,
 	runtime_api: Arc<RA>,
+	client: Arc<Client>,
 }
 
-impl<Block: BlockT, BS, RA> Clone for Executor<Block, BS, RA> {
+impl<Block: BlockT, BS, RA, Client> Clone for Executor<Block, BS, RA, Client> {
 	fn clone(&self) -> Self {
 		Self {
 			block_status: self.block_status.clone(),
 			wait_to_announce: self.wait_to_announce.clone(),
 			parachain_consensus: self.parachain_consensus.clone(),
 			runtime_api: self.runtime_api.clone(),
+			client: self.client.clone(),
 		}
 	}
 }
 
-impl<Block, BS, RA> Executor<Block, BS, RA>
+impl<Block, BS, RA, Client> Executor<Block, BS, RA, Client>
 where
 	Block: BlockT,
+	Client: sp_blockchain::HeaderBackend<Block>,
 	BS: BlockBackend<Block>,
 	RA: ProvideRuntimeApi<Block>,
 	RA::Api: CollectCollationInfo<Block>,
@@ -79,10 +84,11 @@ where
 		announce_block: Arc<dyn Fn(Block::Hash, Option<Vec<u8>>) + Send + Sync>,
 		runtime_api: Arc<RA>,
 		parachain_consensus: Box<dyn ParachainConsensus<Block>>,
+		client: Arc<Client>,
 	) -> Self {
 		let wait_to_announce = Arc::new(Mutex::new(WaitToAnnounce::new(spawner, announce_block)));
 
-		Self { block_status, wait_to_announce, runtime_api, parachain_consensus }
+		Self { block_status, wait_to_announce, runtime_api, parachain_consensus, client }
 	}
 
 	/// Checks the status of the given block hash in the Parachain.
@@ -148,7 +154,8 @@ where
 		block: ParachainBlockData<Block>,
 		block_hash: Block::Hash,
 	) -> Option<Collation> {
-		Some(b"Hey, a dummy Collation here.".to_vec())
+		todo!("Impl `build_collation`")
+		// Some(b"Hey, a dummy Collation here.".to_vec())
 		/*
 		let block_data = BlockData(block.encode());
 		let header = block.into_header();
@@ -202,8 +209,6 @@ where
 			"Should be producing candidate...",
 		);
 
-		Some(CollationResult { collation: b"I'm a dummy collation".to_vec(), result_sender: None })
-
 		/*
 		let last_head = match Block::Header::decode(&mut &validation_data.parent_head.0[..]) {
 			Ok(x) => x,
@@ -221,14 +226,22 @@ where
 		if !self.check_block_status(last_head_hash, &last_head) {
 			return None
 		}
+		*/
 
 		tracing::info!(
 			target: LOG_TARGET,
 			relay_parent = ?relay_parent,
-			at = ?last_head_hash,
 			"Starting collation.",
 		);
 
+		let last_head_hash = self.client.info().best_hash;
+		let last_head = self
+			.client
+			.header(BlockId::Hash(last_head_hash))
+			.ok()?
+			.expect("Failed to fetch the best header");
+
+		let validation_data = Default::default();
 		let candidate = self
 			.parachain_consensus
 			.produce_candidate(&last_head, relay_parent, &validation_data)
@@ -236,6 +249,17 @@ where
 
 		let (header, extrinsics) = candidate.block.deconstruct();
 
+		let head_data = HeadData(header.encode());
+
+		Some(CollationResult {
+			collation: Collation {
+				head_data,
+				number: self.client.info().best_number.saturated_into::<u32>() + 1u32,
+			},
+			result_sender: None,
+		})
+
+		/*
 		let compact_proof = match candidate
 			.proof
 			.into_compact_proof::<HashFor<Block>>(last_head.state_root().clone())
@@ -273,7 +297,8 @@ where
 }
 
 /// Parameters for [`start_executor`].
-pub struct StartExecutorParams<Block: BlockT, RA, BS, Spawner> {
+pub struct StartExecutorParams<Block: BlockT, RA, BS, Spawner, Client> {
+	pub client: Arc<Client>,
 	pub runtime_api: Arc<RA>,
 	pub block_status: Arc<BS>,
 	pub announce_block: Arc<dyn Fn(Block::Hash, Option<Vec<u8>>) + Send + Sync>,
@@ -284,8 +309,9 @@ pub struct StartExecutorParams<Block: BlockT, RA, BS, Spawner> {
 }
 
 /// Start the executor.
-pub async fn start_executor<Block, RA, BS, Spawner>(
+pub async fn start_executor<Block, RA, BS, Spawner, Client>(
 	StartExecutorParams {
+		client,
 		block_status,
 		announce_block,
 		mut overseer_handle,
@@ -293,11 +319,12 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 		key,
 		parachain_consensus,
 		runtime_api,
-	}: StartExecutorParams<Block, RA, BS, Spawner>,
+	}: StartExecutorParams<Block, RA, BS, Spawner, Client>,
 ) where
 	Block: BlockT,
 	BS: BlockBackend<Block> + Send + Sync + 'static,
 	Spawner: SpawnNamed + Clone + Send + Sync + 'static,
+	Client: HeaderBackend<Block> + Send + Sync + 'static,
 	RA: ProvideRuntimeApi<Block> + Send + Sync + 'static,
 	RA::Api: CollectCollationInfo<Block>,
 {
@@ -310,6 +337,7 @@ pub async fn start_executor<Block, RA, BS, Spawner>(
 		announce_block,
 		runtime_api,
 		parachain_consensus,
+		client,
 	);
 
 	let span = tracing::Span::current();

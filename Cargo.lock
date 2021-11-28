@@ -1112,6 +1112,7 @@ dependencies = [
  "polkadot-primitives 0.9.12",
  "sc-client-api",
  "sp-api",
+ "sp-blockchain",
  "sp-consensus",
  "sp-core",
  "sp-runtime",
@@ -1578,9 +1579,11 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
+ "sp-executor",
  "sp-runtime",
  "sp-tracing",
  "sp-trie",
+ "subspace-runtime-primitives",
  "tracing",
 ]
 
@@ -5513,6 +5516,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-executor"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-std",
+ "subspace-core-primitives",
+]
+
+[[package]]
 name = "pallet-feeds"
 version = "0.1.0"
 dependencies = [
@@ -7324,6 +7341,7 @@ dependencies = [
  "sp-authority-discovery",
  "sp-consensus-babe",
  "sp-core",
+ "sp-executor",
  "tracing",
 ]
 
@@ -11011,6 +11029,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-executor"
+version = "0.1.0"
+dependencies = [
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "sp-externalities"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=a9465729e2c5d2ef8d87ac404da27e5e10adde8a#a9465729e2c5d2ef8d87ac404da27e5e10adde8a"
@@ -11749,8 +11776,6 @@ dependencies = [
  "polkadot-node-network-protocol 0.9.12",
  "polkadot-node-subsystem-util 0.9.12",
  "polkadot-overseer 0.9.12",
- "polkadot-primitives 0.9.12",
- "sc-authority-discovery",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client-api",
@@ -11771,14 +11796,13 @@ dependencies = [
  "scale-info",
  "serde_json",
  "sp-api",
- "sp-application-crypto",
- "sp-authority-discovery",
  "sp-authorship",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-subspace",
  "sp-core",
+ "sp-executor",
  "sp-runtime",
  "sp-timestamp",
  "structopt",
@@ -11816,6 +11840,7 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "pallet-balances",
+ "pallet-executor",
  "pallet-feeds",
  "pallet-object-store",
  "pallet-offences-subspace",
@@ -11833,6 +11858,7 @@ dependencies = [
  "sp-consensus-slots",
  "sp-consensus-subspace",
  "sp-core",
+ "sp-executor",
  "sp-inherents",
  "sp-offchain",
  "sp-runtime",
@@ -11851,6 +11877,7 @@ version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-application-crypto",
  "sp-core",
  "sp-runtime",

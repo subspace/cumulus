@@ -128,6 +128,7 @@ where
 
 	cirrus_client_executor::start_executor(cirrus_client_executor::StartExecutorParams {
 		runtime_api: client.clone(),
+		client,
 		block_status,
 		announce_block,
 		overseer_handle: primary_chain_full_node
