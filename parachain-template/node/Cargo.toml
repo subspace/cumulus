@@ -79,25 +79,10 @@ sp-transaction-pool = { git = "https://github.com/paritytech/substrate", rev = "
 
 # Cumulus dependencies
 cumulus-client-cli = { path = "../../client/cli" }
-cumulus-client-collator = { path = "../../client/collator" }
-cumulus-client-consensus-aura = { path = "../../client/consensus/aura" }
 cumulus-client-consensus-common = { path = "../../client/consensus/common" }
 cumulus-client-consensus-relay-chain = { path = "../../client/consensus/relay-chain" }
-cumulus-client-network = { path = "../../client/network" }
-cumulus-client-service = { path = "../../client/service" }
+# FIXME: remove it
 cumulus-primitives-core = { path = "../../primitives/core" }
-cumulus-primitives-parachain-inherent = { path = "../../primitives/parachain-inherent" }
-
-# Polkadot dependencies
-# RelayChainCli
-# polkadot-cli = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
-# Required for AccountIdConversion
-# polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "master" }
-# polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "master" }
-# Required for `NewFull`
-polkadot-service = { git = "https://github.com/liuchengxu/polkadot", rev = "a528e4488bee22cf84e554d7ca3045065af7d850" }
-# Unused
-# polkadot-test-service = { git = "https://github.com/paritytech/polkadot", branch = "master" }
 
 # Subspace dependencies
 subspace-node = { path = "/home/xlc/src/github.com/subspace/subspace/crates/subspace-node" }
