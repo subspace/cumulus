@@ -94,7 +94,7 @@ where
 	/// Checks the status of the given block hash in the Parachain.
 	///
 	/// Returns `true` if the block could be found and is good to be build on.
-	fn check_block_status(&self, hash: Block::Hash, header: &Block::Header) -> bool {
+	fn check_block_status(&self, hash: Block::Hash, number: <Block::Header as HeaderT>::Number) -> bool {
 		match self.block_status.block_status(&BlockId::Hash(hash)) {
 			Ok(BlockStatus::Queued) => {
 				tracing::debug!(
@@ -122,7 +122,7 @@ where
 				false
 			},
 			Ok(BlockStatus::Unknown) => {
-				if header.number().is_zero() {
+				if number.is_zero() {
 					tracing::error!(
 						target: LOG_TARGET,
 						block_hash = ?hash,
@@ -209,38 +209,53 @@ where
 			"Should be producing candidate...",
 		);
 
-		/*
-		let last_head = match Block::Header::decode(&mut &validation_data.parent_head.0[..]) {
-			Ok(x) => x,
-			Err(e) => {
-				tracing::error!(
-					target: LOG_TARGET,
-					error = ?e,
-					"Could not decode the head data."
-				);
-				return None
-			},
-		};
+		let best_number = self.client.info().best_number;
 
-		let last_head_hash = last_head.hash();
-		if !self.check_block_status(last_head_hash, &last_head) {
-			return None
-		}
-		*/
+		// The last block we're building on is from the primary chain if the best local block is not
+		// genesis block.
+		let last_head_hash = if best_number.is_zero() {
+			self.client.info().best_hash
+		} else {
+			let last_head_hash = match <<Block::Header as HeaderT>::Hash>::decode(&mut &validation_data.parent_head[..]) {
+				Ok(x) => x,
+				Err(e) => {
+					tracing::error!(
+						target: LOG_TARGET,
+						error = ?e,
+						"Could not decode the pending head hash."
+					);
+					return None
+				},
+			};
+
+			if !self.check_block_status(last_head_hash, best_number) {
+				return None
+			}
+
+			last_head_hash
+		};
 
 		tracing::info!(
 			target: LOG_TARGET,
 			relay_parent = ?relay_parent,
+			client_info = ?self.client.info(),
 			"Starting collation.",
 		);
 
-		let last_head_hash = self.client.info().best_hash;
 		let last_head = self
 			.client
 			.header(BlockId::Hash(last_head_hash))
 			.ok()?
 			.expect("Failed to fetch the best header");
 
+		tracing::info!(
+			target: LOG_TARGET,
+			last_head = ?last_head,
+			?last_head_hash,
+			"=========== Producing candidate.",
+		);
+
+		// FIXME: replace cumulus_primitives_core::PersistedValidationData
 		let validation_data = Default::default();
 		let candidate = self
 			.parachain_consensus

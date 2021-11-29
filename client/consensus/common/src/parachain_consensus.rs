@@ -93,7 +93,7 @@ where
 		let finalized_head = if let Some(h) = finalized_heads.next().await {
 			h
 		} else {
-			tracing::debug!(target: "cumulus-consensus", "Stopping following finalized head.");
+			tracing::debug!(target: "cirrus::consensus", "Stopping following finalized head.");
 			return
 		};
 
@@ -101,7 +101,7 @@ where
 			Ok(header) => header,
 			Err(err) => {
 				tracing::debug!(
-					target: "cumulus-consensus",
+					target: "cirrus::consensus",
 					error = ?err,
 					"Could not decode parachain header while following finalized heads.",
 				);
@@ -116,12 +116,12 @@ where
 			if let Err(e) = parachain.finalize_block(BlockId::hash(hash), None, true) {
 				match e {
 					ClientError::UnknownBlock(_) => tracing::debug!(
-						target: "cumulus-consensus",
+						target: "cirrus::consensus",
 						block_hash = ?hash,
 						"Could not finalize block because it is unknown.",
 					),
 					_ => tracing::warn!(
-						target: "cumulus-consensus",
+						target: "cirrus::consensus",
 						error = ?e,
 						block_hash = ?hash,
 						"Failed to finalize block",
@@ -161,6 +161,11 @@ pub async fn run_parachain_consensus<P, R, Block, B>(
 	R: RelaychainClient,
 	B: Backend<Block>,
 {
+	tracing::debug!(
+		target: "cirrus::consensus",
+		"=============== [run_parachain_consensus]",
+	);
+
 	let follow_new_best =
 		follow_new_best(para_id, parachain.clone(), relay_chain.clone(), announce_block.clone());
 	let follow_finalized_head =
@@ -195,6 +200,11 @@ async fn follow_new_best_subspace<P, R, Block, B>(
 	R: RelaychainClient,
 	B: Backend<Block>,
 {
+	tracing::debug!(
+		target: "cirrus::consensus",
+		"=============== [follow_new_best_subspace]",
+	);
+
 	let mut new_best_heads = relay_chain.new_best_executor_heads(parachain.clone()).fuse();
 	let mut imported_blocks = parachain.import_notification_stream().fuse();
 	// The unset best header of the parachain. Will be `Some(_)` when we have imported a relay chain
@@ -205,6 +215,11 @@ async fn follow_new_best_subspace<P, R, Block, B>(
 	loop {
 		select! {
 			h = new_best_heads.next() => {
+				tracing::debug!(
+					target: "cirrus::consensus",
+					new_best_executor_head = ?h,
+					"=============== [follow_new_best_subspace] New executor head",
+				);
 				match h {
 					Some(h) => handle_new_best_parachain_head_subspace(
 						h,
@@ -213,7 +228,7 @@ async fn follow_new_best_subspace<P, R, Block, B>(
 					).await,
 					None => {
 						tracing::debug!(
-							target: "cumulus-consensus",
+							target: "cirrus::consensus",
 							"Stopping following new best.",
 						);
 						return
@@ -230,7 +245,7 @@ async fn follow_new_best_subspace<P, R, Block, B>(
 					).await,
 					None => {
 						tracing::debug!(
-							target: "cumulus-consensus",
+							target: "cirrus::consensus",
 							"Stopping following imported blocks.",
 						);
 						return
@@ -277,7 +292,7 @@ async fn follow_new_best<P, R, Block, B>(
 					).await,
 					None => {
 						tracing::debug!(
-							target: "cumulus-consensus",
+							target: "cirrus::consensus",
 							"Stopping following new best.",
 						);
 						return
@@ -294,7 +309,7 @@ async fn follow_new_best<P, R, Block, B>(
 					).await,
 					None => {
 						tracing::debug!(
-							target: "cumulus-consensus",
+							target: "cirrus::consensus",
 							"Stopping following imported blocks.",
 						);
 						return
@@ -353,7 +368,7 @@ async fn handle_new_block_imported<Block, P>(
 			import_block_as_new_best(unset_hash, unset_best_header, parachain).await;
 		},
 		state => tracing::debug!(
-			target: "cumulus-consensus",
+			target: "cirrus::consensus",
 			?unset_best_header,
 			?notification.header,
 			?state,
@@ -372,20 +387,20 @@ async fn handle_new_best_parachain_head_subspace<Block, P>(
 	P: UsageProvider<Block> + Send + Sync + BlockBackend<Block> + HeaderBackend<Block>,
 	for<'a> &'a P: BlockImport<Block>,
 {
-	println!("================= [handle_new_best_parachain_head_subspace]");
 	let parachain_head_hash = match <<<Block as BlockT>::Header as HeaderT>::Hash>::decode(
 		&mut &encoded_head_hash[..],
 	) {
 		Ok(header) => header,
 		Err(err) => {
 			tracing::debug!(
-				target: "cumulus-consensus",
+				target: "cirrus::consensus",
 				error = ?err,
 				"Could not decode Parachain header while following best heads.",
 			);
 			return
 		},
 	};
+	println!("================= [handle_new_best_parachain_head_subspace] parachain_head_hash: {:?}", parachain_head_hash);
 
 	let parachain_head = parachain.header(BlockId::Hash(parachain_head_hash)).unwrap().unwrap();
 
@@ -393,8 +408,9 @@ async fn handle_new_best_parachain_head_subspace<Block, P>(
 
 	if parachain.usage_info().chain.best_hash == hash {
 		tracing::debug!(
-			target: "cumulus-consensus",
+			target: "cirrus::consensus",
 			block_hash = ?hash,
+			usage_info = ?parachain.usage_info(),
 			"Skipping set new best block, because block is already the best.",
 		)
 	} else {
@@ -407,7 +423,7 @@ async fn handle_new_best_parachain_head_subspace<Block, P>(
 			},
 			Ok(BlockStatus::InChainPruned) => {
 				tracing::error!(
-					target: "cumulus-collator",
+					target: "cirrus::consensus",
 					block_hash = ?hash,
 					"Trying to set pruned block as new best!",
 				);
@@ -416,14 +432,14 @@ async fn handle_new_best_parachain_head_subspace<Block, P>(
 				*unset_best_header = Some(parachain_head);
 
 				tracing::debug!(
-					target: "cumulus-collator",
+					target: "cirrus::consensus",
 					block_hash = ?hash,
 					"Parachain block not yet imported, waiting for import to enact as best block.",
 				);
 			},
 			Err(e) => {
 				tracing::error!(
-					target: "cumulus-collator",
+					target: "cirrus::consensus",
 					block_hash = ?hash,
 					error = ?e,
 					"Failed to get block status of block.",
@@ -448,7 +464,7 @@ async fn handle_new_best_parachain_head<Block, P>(
 		Ok(header) => header,
 		Err(err) => {
 			tracing::debug!(
-				target: "cumulus-consensus",
+				target: "cirrus::consensus",
 				error = ?err,
 				"Could not decode Parachain header while following best heads.",
 			);
@@ -460,7 +476,7 @@ async fn handle_new_best_parachain_head<Block, P>(
 
 	if parachain.usage_info().chain.best_hash == hash {
 		tracing::debug!(
-			target: "cumulus-consensus",
+			target: "cirrus::consensus",
 			block_hash = ?hash,
 			"Skipping set new best block, because block is already the best.",
 		)
@@ -474,7 +490,7 @@ async fn handle_new_best_parachain_head<Block, P>(
 			},
 			Ok(BlockStatus::InChainPruned) => {
 				tracing::error!(
-					target: "cumulus-collator",
+					target: "cirrus::consensus",
 					block_hash = ?hash,
 					"Trying to set pruned block as new best!",
 				);
@@ -483,14 +499,14 @@ async fn handle_new_best_parachain_head<Block, P>(
 				*unset_best_header = Some(parachain_head);
 
 				tracing::debug!(
-					target: "cumulus-collator",
+					target: "cirrus::consensus",
 					block_hash = ?hash,
 					"Parachain block not yet imported, waiting for import to enact as best block.",
 				);
 			},
 			Err(e) => {
 				tracing::error!(
-					target: "cumulus-collator",
+					target: "cirrus::consensus",
 					block_hash = ?hash,
 					error = ?e,
 					"Failed to get block status of block.",
@@ -510,7 +526,7 @@ where
 	let best_number = parachain.usage_info().chain.best_number;
 	if *header.number() < best_number {
 		tracing::debug!(
-			target: "cumulus-consensus",
+			target: "cirrus::consensus",
 			%best_number,
 			block_number = %header.number(),
 			"Skipping importing block as new best block, because there already exists a \
@@ -526,7 +542,7 @@ where
 
 	if let Err(err) = (&*parachain).import_block(block_import_params, Default::default()).await {
 		tracing::warn!(
-			target: "cumulus-consensus",
+			target: "cirrus::consensus",
 			block_hash = ?hash,
 			error = ?err,
 			"Failed to set new best block.",
@@ -537,7 +553,8 @@ where
 impl<T> RelaychainClient for Arc<T>
 where
 	T: sc_client_api::BlockchainEvents<PBlock> + ProvideRuntimeApi<PBlock> + 'static + Send + Sync,
-	<T as ProvideRuntimeApi<PBlock>>::Api: ParachainHost<PBlock> + sp_executor::ExecutorApi<PBlock>,
+	// <T as ProvideRuntimeApi<PBlock>>::Api: ParachainHost<PBlock> + sp_executor::ExecutorApi<PBlock>,
+	<T as ProvideRuntimeApi<PBlock>>::Api: sp_executor::ExecutorApi<PBlock>,
 {
 	type Error = ClientError;
 
@@ -574,11 +591,12 @@ where
 		at: &BlockId<PBlock>,
 		para_id: ParaId,
 	) -> ClientResult<Option<Vec<u8>>> {
+		Ok(None)
 		// TODO:
-		self.runtime_api()
-			.persisted_validation_data(at, para_id, OccupiedCoreAssumption::TimedOut)
-			.map(|s| s.map(|s| s.parent_head.0))
-			.map_err(Into::into)
+		// self.runtime_api()
+			// .persisted_validation_data(at, para_id, OccupiedCoreAssumption::TimedOut)
+			// .map(|s| s.map(|s| s.parent_head.0))
+			// .map_err(Into::into)
 	}
 
 	fn new_best_executor_heads<
@@ -593,9 +611,18 @@ where
 		self.import_notification_stream()
 			.filter_map(move |n| {
 				future::ready(if n.is_new_best {
+
+					tracing::debug!(
+						target: "cirrus::consensus",
+						is_new_best = n.is_new_best,
+						secondary_best_number = ?client.info().best_number,
+						"=================== [new_best_executor_heads] Received a new notification"
+					);
+
 					let number = client.info().best_number;
 					relay_chain
-						.executor_head_hash(&BlockId::hash(n.hash), number.saturated_into())
+						.executor_head_hash(&BlockId::hash(n.hash),
+						number.saturated_into::<BlockNumber>() + 1)
 						.ok()
 						.flatten()
 				} else {
@@ -611,9 +638,16 @@ where
 		number: BlockNumber,
 	) -> ClientResult<Option<Vec<u8>>> {
 		use sp_executor::ExecutorApi;
-		self.runtime_api()
-			.head_hash(at, number)
-			.map(|h| h.map(|h| h.encode()))
+		let head_hash = self.runtime_api().head_hash(at, number);
+
+		tracing::debug!(
+			target: "cirrus::consensus",
+			?head_hash,
+			number,
+			"=================== [executor_head_hash] Receive head_hash from runtime"
+		);
+
+		head_hash.map(|h| h.map(|h| h.encode()))
 			.map_err(Into::into)
 	}
 }

@@ -100,6 +100,7 @@ where
 		+ ProvideRuntimeApi<Block>
 		+ 'static,
 	Client::Api: CollectCollationInfo<Block>,
+	RClient: Clone + cumulus_client_consensus_common::RelaychainClient + Send + Sync + 'static,
 	for<'b> &'b Client: BlockImport<Block>,
 	Spawner: SpawnNamed + Clone + Send + Sync + 'static,
 	Backend: BackendT<Block> + 'static,
@@ -116,15 +117,14 @@ where
 	});
 	*/
 
-	/*
+	let para_id = 2000.into();
 	let consensus = cumulus_client_consensus_common::run_parachain_consensus(
 		para_id,
 		client.clone(),
-		client.clone(),
+		primary_chain_full_node.client.clone(),
 		announce_block.clone(),
 	);
 	task_manager.spawn_essential_handle().spawn("cumulus-consensus", consensus);
-	*/
 
 	cirrus_client_executor::start_executor(cirrus_client_executor::StartExecutorParams {
 		runtime_api: client.clone(),

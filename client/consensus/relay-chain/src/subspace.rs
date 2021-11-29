@@ -52,7 +52,7 @@ use sp_inherents::{CreateInherentDataProviders, InherentData, InherentDataProvid
 use sp_runtime::traits::{Block as BlockT, HashFor, Header as HeaderT};
 use std::{marker::PhantomData, sync::Arc, time::Duration};
 
-const LOG_TARGET: &str = "cumulus-consensus-relay-chain";
+const LOG_TARGET: &str = "cirrus::consensus::relay-chain";
 
 /// The implementation of the relay-chain provided consensus for parachains.
 pub struct PrimaryChainConsensus<B, PF, BI, RClient, RBackend, CIDP> {
@@ -164,6 +164,11 @@ where
 		relay_parent: PHash,
 		validation_data: &PersistedValidationData,
 	) -> Option<ParachainCandidate<B>> {
+		tracing::debug!(
+			target: LOG_TARGET,
+			?parent,
+			"[produce_candidate] initializing proposer_factory",
+		);
 		let proposer_future = self.proposer_factory.lock().init(&parent);
 
 		let proposer = proposer_future
@@ -191,6 +196,8 @@ where
 			.await
 			.map_err(|e| tracing::error!(target: LOG_TARGET, error = ?e, "Proposing failed."))
 			.ok()?;
+
+		tracing::debug!(target: LOG_TARGET, ?block, "Proposed block");
 
 		let (header, extrinsics) = block.clone().deconstruct();
 
